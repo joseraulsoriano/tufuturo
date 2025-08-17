@@ -16,9 +16,16 @@ import { useAuth } from '../context/AuthContext';
 
 const LoginScreen: React.FC = () => {
   const { t } = useLanguage();
-  const { signIn, isLoading } = useAuth();
 
-  const handleSignIn = () => { signIn(); };
+  const { signInWithGoogle, authEnabled } = useAuth();
+  const handleSignIn = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (e) {
+      console.log('Sign-in error', e);
+    }
+  };
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -46,7 +53,9 @@ const LoginScreen: React.FC = () => {
         <Card style={styles.signInCard}>
           <CardHeader>
             <CardTitle>Sign In</CardTitle>
-            <CardDescription>Click below to sign in to your account</CardDescription>
+            <CardDescription>
+              {authEnabled ? 'Click below to sign in to your account' : 'Auth is disabled (dev mode). Continue without sign in.'}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {/* Sign In Button */}
@@ -59,7 +68,7 @@ const LoginScreen: React.FC = () => {
             >
               <Ionicons name="log-in" size={20} color={violetTheme.colors.primaryForeground} />
               <Text style={styles.signInButtonText}>
-                Sign In
+                {authEnabled ? 'Sign In' : 'Continue (Auth Disabled)'}
               </Text>
             </Button>
 

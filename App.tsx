@@ -5,7 +5,9 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { violetTheme } from './src/theme/colors';
 import { LanguageProvider, useLanguage } from './src/context/LanguageContext';
+
 import { OnboardingProvider } from './src/context/OnboardingContext';
+
 import { AuthProvider } from './src/context/AuthContext';
 
 // Screens
@@ -15,6 +17,8 @@ import AssessmentGate from './src/screens/AssessmentGate';
 import ResultsScreen from './src/screens/DashboardScreen';
 import AccountScreen from './src/screens/AccountScreen';
 import ExploreScreen from './src/screens/ExploreScreen';
+import SchoolsMapScreen from './src/screens/SchoolsMapScreen';
+
 
 const Tab = createBottomTabNavigator();
 
@@ -33,6 +37,8 @@ const TabNavigator: React.FC = () => {
             iconName = focused ? 'document-text' : 'document-text-outline';
           } else if (route.name === 'Results') {
             iconName = focused ? 'analytics' : 'analytics-outline';
+          } else if (route.name === 'SchoolsMap') {
+            iconName = focused ? 'map' : 'map-outline';
           } else if (route.name === 'Login') {
             iconName = focused ? 'log-in' : 'log-in-outline';
           } else if (route.name === 'Account') {
@@ -84,6 +90,11 @@ const TabNavigator: React.FC = () => {
         options={{ title: 'Explore' }}
       />
       <Tab.Screen
+        name="SchoolsMap"
+        component={SchoolsMapScreen}
+        options={{ title: 'Schools' }}
+      />
+      <Tab.Screen
         name="Login"
         component={LoginScreen}
         options={{ title: t('nav.login') }}
@@ -105,5 +116,6 @@ export default function App() {
         </OnboardingProvider>
       </AuthProvider>
     </LanguageProvider>
+
   );
 }
