@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -18,11 +18,15 @@ const LoginScreen: React.FC = () => {
   const { t } = useLanguage();
 
   const { signInWithGoogle, authEnabled } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
   const handleSignIn = async () => {
     try {
+      setIsLoading(true);
       await signInWithGoogle();
     } catch (e) {
       console.log('Sign-in error', e);
+    } finally {
+      setIsLoading(false);
     }
   };
 

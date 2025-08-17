@@ -99,7 +99,11 @@ const TabNavigator: React.FC = () => {
         component={LoginScreen}
         options={{ title: t('nav.login') }}
       />
-      {/* Account tab se oculta; la cuenta se podrá abrir desde un menú o header en el futuro */}
+      <Tab.Screen
+        name="Account"
+        component={AccountScreen}
+        options={{ title: 'Account' }}
+      />
     </Tab.Navigator>
   );
 };

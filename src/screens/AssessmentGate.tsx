@@ -6,10 +6,10 @@ import { useAuth } from '../context/AuthContext';
 import { useOnboarding } from '../context/OnboardingContext';
 
 const AssessmentGate: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const { profileCompleted, assessmentCompleted } = useOnboarding();
 
-  if (!isAuthenticated) return <LoginScreen />;
+  if (!user) return <LoginScreen />;
   if (!profileCompleted) return <ProfileFormScreen />;
   if (!assessmentCompleted) return <FormScreen />;
   return <FormScreen />;
