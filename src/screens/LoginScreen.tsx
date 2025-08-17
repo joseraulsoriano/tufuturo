@@ -12,14 +12,13 @@ import { violetTheme } from '../theme/colors';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 
 const LoginScreen: React.FC = () => {
   const { t } = useLanguage();
+  const { signIn, isLoading } = useAuth();
 
-  const handleSignIn = () => {
-    // Add your sign in logic here
-    console.log('Sign in button pressed');
-  };
+  const handleSignIn = () => { signIn(); };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -56,6 +55,7 @@ const LoginScreen: React.FC = () => {
               size="lg"
               style={styles.signInButton}
               onPress={handleSignIn}
+              loading={isLoading}
             >
               <Ionicons name="log-in" size={20} color={violetTheme.colors.primaryForeground} />
               <Text style={styles.signInButtonText}>

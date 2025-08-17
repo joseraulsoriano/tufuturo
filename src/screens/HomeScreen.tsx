@@ -15,9 +15,13 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../co
 import Button from '../components/ui/Button';
 import { useLanguage } from '../context/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import { useOnboarding } from '../context/OnboardingContext';
+import RadarChart from '../components/learning/RadarChart';
+import mcp, { extractResultsArray, normalizeVolunteerOpportunity } from '../services/mcp';
 
 const HomeScreen: React.FC = () => {
   const { t } = useLanguage();
+  const { riasecScores, riasecTop, userStrengths, userWeaknesses, volunteerPlan } = useOnboarding() as any;
 
   const stats = [
     { label: t('home.stats.assessments'), value: '12', icon: 'document-text', color: violetTheme.colors.primary },
@@ -56,7 +60,7 @@ const HomeScreen: React.FC = () => {
     },
   ];
 
-  // 🔹 Volunteer API state
+  // 🔹 Volunteer API state (from MCP)
   const [volunteerOpportunities, setVolunteerOpportunities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -77,7 +81,7 @@ const HomeScreen: React.FC = () => {
     applicationDeadline: string;
   }
 
-  // Fallback data in case API fails
+  // Fallback data in case MCP fails
   const fallbackOpportunities: VolunteerOpportunity[] = [
     {
       id: 1,
@@ -202,128 +206,63 @@ const HomeScreen: React.FC = () => {
   ];
 
   useEffect(() => {
-    const fetchOpportunities = async () => {
+    const fetchFromMcp = async () => {
       try {
-        // Try multiple real volunteer APIs to get diverse opportunities
-        const apis = [
-          // Idealist API (real volunteer opportunities)
-          "https://api.idealist.org/api/v1/search?q=volunteer&type=opportunity&limit=10",
-          // VolunteerMatch API (real volunteer positions)
-          "https://www.volunteermatch.org/api/call?action=searchOpportunities&query=volunteer&limit=10",
-          // All for Good API (Google's volunteer platform)
-          "https://www.allforgood.org/api/volopps?q=volunteer&limit=10"
-        ];
+        // Prefer localized opportunities for MX with personalized filters
+        const filters: any = { location: 'cdmx' };
+        if (volunteerPlan?.categories?.length) filters.career = volunteerPlan.categories;
+        if (volunteerPlan?.suggestedKeywords?.length) filters.keywords = volunteerPlan.suggestedKeywords;
+        const mx = await mcp.volunteer.mxSearch({ filters });
+        const items = extractResultsArray(mx);
 
-        let opportunities: VolunteerOpportunity[] = [];
-        
-        for (const apiUrl of apis) {
-          try {
-            const response = await fetch(apiUrl, {
-              headers: {
-                'Accept': 'application/json',
-                'User-Agent': 'VioletDashMobile/1.0'
-              }
-            });
-            
-            if (response.ok) {
-              const data = await response.json();
-              
-              // Parse different API formats
-              let items: any[] = [];
-              if (data.opportunities) items = data.opportunities;
-              else if (data.results) items = data.results;
-              else if (data.data) items = data.data;
-              else if (Array.isArray(data)) items = data;
-              
-              if (items.length > 0) {
-                const formatted: VolunteerOpportunity[] = items.slice(0, 5).map((item: any, index: number) => ({
-                  id: item.id || item.opportunity_id || index,
-                  title: item.title || item.name || 'Volunteer Opportunity',
-                  organization: item.organization?.name || item.organization_name || item.organization || 'Organization',
-                  description: item.description || item.summary || 'Help make a difference in your community.',
-                  location: item.location || item.city || item.address || 'Location TBD',
-                  duration: item.time_commitment || item.duration || 'Flexible',
-                  applicationLink: item.url || item.website || item.apply_url || 'https://example.com',
-                  image: item.image_url || item.image || 'https://via.placeholder.com/150',
-                  type: item.category || item.interest_area || item.type || 'General',
-                  requiredSkills: item.skills || item.requirements || ['No specific skills required'],
-                  benefits: item.benefits || 'Gain experience, build connections, make a difference.',
-                  financialSupport: item.financial_support || item.compensation || null,
-                  applicationDeadline: item.deadline || item.end_date || 'Ongoing',
-                }));
-                
-                opportunities = [...opportunities, ...formatted];
-                break; // Use first successful API
-              }
-            }
-          } catch (apiError) {
-            console.log(`API ${apiUrl} failed:`, apiError);
-            continue; // Try next API
-          }
-        }
+        const normalized = items.slice(0, 8).map((item: any, index: number) => normalizeVolunteerOpportunity(item, index));
 
-        // If no real APIs worked, try a more reliable approach
-        if (opportunities.length === 0) {
-          // Use a public dataset or scrape from a reliable volunteer website
-          const response = await fetch(
-            "https://api.github.com/search/repositories?q=volunteer+community+service+healthcare+education&sort=updated&order=desc&per_page=8"
-          );
-          
-          if (response.ok) {
-            const data = await response.json();
-            
-            // Create more realistic volunteer opportunities from GitHub data
-            const volunteerCategories = [
-              'Community Service', 'Healthcare', 'Education', 'Environmental',
-              'Youth Development', 'Animal Welfare', 'Social Services', 'Arts & Culture'
-            ];
-            
-            opportunities = data.items.map((item: any, index: number): VolunteerOpportunity => ({
-              id: item.id,
-              title: `${volunteerCategories[index % volunteerCategories.length]} - ${item.name}`,
-              organization: item.owner?.login || 'Open Source Organization',
-              description: item.description || `Help with ${volunteerCategories[index % volunteerCategories.length].toLowerCase()} initiatives and community projects.`,
-              location: 'Remote & Local',
-              duration: 'Flexible',
-              applicationLink: item.html_url,
-              image: 'https://via.placeholder.com/150',
-              type: volunteerCategories[index % volunteerCategories.length],
-              requiredSkills: ['Collaboration', 'Communication', 'Commitment'],
-              benefits: 'Build your portfolio, learn new skills, network with professionals.',
-              financialSupport: null,
-              applicationDeadline: 'Ongoing',
-            }));
-          }
+        if (normalized.length > 0) {
+          setVolunteerOpportunities(normalized);
+          setLoading(false);
+          return;
         }
-
-        if (opportunities.length > 0) {
-          setVolunteerOpportunities(opportunities);
-        } else {
-          // If all else fails, use fallback but mark as sample data
-          setVolunteerOpportunities(fallbackOpportunities.map(opp => ({
-            ...opp,
-            title: `${opp.title} (Sample Data)`,
-            description: `${opp.description} This is sample data - real opportunities would be loaded from volunteer APIs.`
-          })));
-        }
-      } catch (error) {
-        console.log("All volunteer APIs failed, using fallback data:", error);
-        setVolunteerOpportunities(fallbackOpportunities.map(opp => ({
-          ...opp,
-          title: `${opp.title} (Sample Data)`,
-          description: `${opp.description} This is sample data - real opportunities would be loaded from volunteer APIs.`
-        })));
-      } finally {
-        setLoading(false);
+      } catch (err) {
+        console.log('MCP volunteer.mx_search failed, using fallback:', err);
       }
+
+      // Fallback
+      setVolunteerOpportunities(fallbackOpportunities);
+      setLoading(false);
     };
 
-    fetchOpportunities();
-  }, []);
+    fetchFromMcp();
+  }, [volunteerPlan]);
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+          {/* RIASEC Summary */}
+          {riasecScores && (
+            <Card style={styles.quickActionsCard}>
+              <CardHeader>
+                <CardTitle>Your Profile Summary</CardTitle>
+                <CardDescription>Top areas and your RIASEC radar</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <View style={{ alignItems: 'center', marginBottom: 12 }}>
+                  <RadarChart scores={riasecScores} />
+                </View>
+                <View style={{ marginBottom: 8 }}>
+                  <Text style={{ fontWeight: '700', color: violetTheme.colors.foreground }}>Top áreas/carreras:</Text>
+                  <Text style={{ color: violetTheme.colors.foreground }}>{(riasecTop||[]).slice(0,3).join(', ') || '—'}</Text>
+                </View>
+                <View style={{ marginBottom: 8 }}>
+                  <Text style={{ fontWeight: '700', color: violetTheme.colors.foreground }}>Fortalezas:</Text>
+                  <Text style={{ color: violetTheme.colors.foreground }}>{(userStrengths||[]).join(', ') || '—'}</Text>
+                </View>
+                <View>
+                  <Text style={{ fontWeight: '700', color: violetTheme.colors.foreground }}>Áreas a reforzar:</Text>
+                  <Text style={{ color: violetTheme.colors.foreground }}>{(userWeaknesses||[]).join(', ') || '—'}</Text>
+                </View>
+              </CardContent>
+            </Card>
+          )}
           {/* Stats */}
           <View style={styles.statsContainer}>
             <View style={styles.statsHeader}>
