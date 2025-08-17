@@ -12,13 +12,17 @@ import { violetTheme } from '../theme/colors';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 
 const LoginScreen: React.FC = () => {
   const { t } = useLanguage();
-
-  const handleSignIn = () => {
-    // Add your sign in logic here
-    console.log('Sign in button pressed');
+  const { signInWithGoogle, authEnabled } = useAuth();
+  const handleSignIn = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (e) {
+      console.log('Sign-in error', e);
+    }
   };
 
   return (
@@ -47,7 +51,9 @@ const LoginScreen: React.FC = () => {
         <Card style={styles.signInCard}>
           <CardHeader>
             <CardTitle>Sign In</CardTitle>
-            <CardDescription>Click below to sign in to your account</CardDescription>
+            <CardDescription>
+              {authEnabled ? 'Click below to sign in to your account' : 'Auth is disabled (dev mode). Continue without sign in.'}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {/* Sign In Button */}
@@ -59,7 +65,7 @@ const LoginScreen: React.FC = () => {
             >
               <Ionicons name="log-in" size={20} color={violetTheme.colors.primaryForeground} />
               <Text style={styles.signInButtonText}>
-                Sign In
+                {authEnabled ? 'Sign In' : 'Continue (Auth Disabled)'}
               </Text>
             </Button>
 

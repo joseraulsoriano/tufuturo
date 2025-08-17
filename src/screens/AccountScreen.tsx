@@ -7,27 +7,28 @@ import {
   SafeAreaView,
   TouchableOpacity,
   Image,
+  Switch,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { violetTheme } from '../theme/colors';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
+import { useAuth } from '../context/AuthContext';
 
 const AccountScreen: React.FC = () => {
-  // Mock user data - you can replace this with real data later
-  const user = {
-    name: 'Demo User',
-    email: 'user@example.com',
-    avatar: 'https://via.placeholder.com/100',
-    joinDate: 'January 2024',
-    completedAssessments: 3,
-    totalSkills: 12,
-    volunteerHours: 24,
+  const { user, signOut, authEnabled, setAuthEnabled } = useAuth();
+  const profile = {
+    name: user?.name || 'User',
+    email: user?.email || 'unknown@example.com',
+    avatar: user?.photo || 'https://via.placeholder.com/100',
+    joinDate: '—',
+    completedAssessments: 0,
+    totalSkills: 0,
+    volunteerHours: 0,
   };
 
-  const handleLogout = () => {
-    // Add your logout logic here
-    console.log('Logout pressed');
+  const handleLogout = async () => {
+    await signOut();
   };
 
   const handleEditProfile = () => {
@@ -43,13 +44,13 @@ const AccountScreen: React.FC = () => {
           <CardContent>
             <View style={styles.profileHeader}>
               <Image
-                source={{ uri: user.avatar }}
+                source={{ uri: profile.avatar }}
                 style={styles.avatar}
               />
               <View style={styles.profileInfo}>
-                <Text style={styles.userName}>{user.name}</Text>
-                <Text style={styles.userEmail}>{user.email}</Text>
-                <Text style={styles.joinDate}>Member since {user.joinDate}</Text>
+                <Text style={styles.userName}>{profile.name}</Text>
+                <Text style={styles.userEmail}>{profile.email}</Text>
+                <Text style={styles.joinDate}>Member since {profile.joinDate}</Text>
               </View>
               <TouchableOpacity style={styles.editButton} onPress={handleEditProfile}>
                 <Ionicons name="create-outline" size={20} color={violetTheme.colors.primary} />
@@ -70,21 +71,21 @@ const AccountScreen: React.FC = () => {
                 <View style={[styles.statIcon, { backgroundColor: violetTheme.colors.violet100 }]}>
                   <Ionicons name="document-text" size={24} color={violetTheme.colors.primary} />
                 </View>
-                <Text style={styles.statValue}>{user.completedAssessments}</Text>
+                <Text style={styles.statValue}>{profile.completedAssessments}</Text>
                 <Text style={styles.statLabel}>Assessments</Text>
               </View>
               <View style={styles.statItem}>
                 <View style={[styles.statIcon, { backgroundColor: violetTheme.colors.violet100 }]}>
                   <Ionicons name="construct" size={24} color={violetTheme.colors.primary} />
                 </View>
-                <Text style={styles.statValue}>{user.totalSkills}</Text>
+                <Text style={styles.statValue}>{profile.totalSkills}</Text>
                 <Text style={styles.statLabel}>Skills</Text>
               </View>
               <View style={styles.statItem}>
                 <View style={[styles.statIcon, { backgroundColor: violetTheme.colors.violet100 }]}>
                   <Ionicons name="people" size={24} color={violetTheme.colors.primary} />
                 </View>
-                <Text style={styles.statValue}>{user.volunteerHours}</Text>
+                <Text style={styles.statValue}>{profile.volunteerHours}</Text>
                 <Text style={styles.statLabel}>Volunteer Hours</Text>
               </View>
             </View>
@@ -97,6 +98,11 @@ const AccountScreen: React.FC = () => {
             <CardTitle>Account Settings</CardTitle>
           </CardHeader>
           <CardContent>
+            <View style={styles.actionItem}>
+              <Ionicons name="lock-closed-outline" size={20} color={violetTheme.colors.muted} />
+              <Text style={styles.actionText}>Enable Authentication</Text>
+              <Switch value={authEnabled} onValueChange={setAuthEnabled} />
+            </View>
             <TouchableOpacity style={styles.actionItem}>
               <Ionicons name="notifications-outline" size={20} color={violetTheme.colors.muted} />
               <Text style={styles.actionText}>Notifications</Text>

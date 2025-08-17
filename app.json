@@ -13,17 +13,35 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.violetdash.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.violetdash.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.176765884263-kjjes04qc68p92voqmj1u083isigflf9"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "c8f78cca-5d53-40eb-af05-cd5772f6a386"
+      },
+      "googleWebClientId": "176765884263-70ikhvtrp6k89d15f39c0vh6u0t5g629.apps.googleusercontent.com",
+      "googleIosClientId": "176765884263-kjjes04qc68p92voqmj1u083isigflf9.apps.googleusercontent.com",
+      "authEnabled": true
     }
   }
 }

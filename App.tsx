@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { violetTheme } from './src/theme/colors';
 import { LanguageProvider, useLanguage } from './src/context/LanguageContext';
+import { AuthProvider } from './src/context/AuthContext';
 
 // Screens
 import HomeScreen from './src/screens/HomeScreen';
@@ -12,6 +13,7 @@ import LoginScreen from './src/screens/LoginScreen';
 import FormScreen from './src/screens/FormScreen';
 import ResultsScreen from './src/screens/DashboardScreen';
 import AccountScreen from './src/screens/AccountScreen';
+import SchoolsMapScreen from './src/screens/SchoolsMapScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -30,6 +32,8 @@ const TabNavigator: React.FC = () => {
             iconName = focused ? 'document-text' : 'document-text-outline';
           } else if (route.name === 'Results') {
             iconName = focused ? 'analytics' : 'analytics-outline';
+          } else if (route.name === 'SchoolsMap') {
+            iconName = focused ? 'map' : 'map-outline';
           } else if (route.name === 'Login') {
             iconName = focused ? 'log-in' : 'log-in-outline';
           } else if (route.name === 'Account') {
@@ -81,6 +85,11 @@ const TabNavigator: React.FC = () => {
         options={{ title: t('nav.results') }}
       />
       <Tab.Screen
+        name="SchoolsMap"
+        component={SchoolsMapScreen}
+        options={{ title: 'Schools' }}
+      />
+      <Tab.Screen
         name="Login"
         component={LoginScreen}
         options={{ title: t('nav.login') }}
@@ -96,11 +105,13 @@ const TabNavigator: React.FC = () => {
 
 export default function App() {
   return (
-    <LanguageProvider>
-      <NavigationContainer>
-        <StatusBar style="auto" />
-        <TabNavigator />
-      </NavigationContainer>
-    </LanguageProvider>
+    <AuthProvider>
+      <LanguageProvider>
+        <NavigationContainer>
+          <StatusBar style="auto" />
+          <TabNavigator />
+        </NavigationContainer>
+      </LanguageProvider>
+    </AuthProvider>
   );
 }
