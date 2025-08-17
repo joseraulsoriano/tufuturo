@@ -5,15 +5,20 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { violetTheme } from './src/theme/colors';
 import { LanguageProvider, useLanguage } from './src/context/LanguageContext';
+
+import { OnboardingProvider } from './src/context/OnboardingContext';
+
 import { AuthProvider } from './src/context/AuthContext';
 
 // Screens
 import HomeScreen from './src/screens/HomeScreen';
 import LoginScreen from './src/screens/LoginScreen';
-import FormScreen from './src/screens/FormScreen';
+import AssessmentGate from './src/screens/AssessmentGate';
 import ResultsScreen from './src/screens/DashboardScreen';
 import AccountScreen from './src/screens/AccountScreen';
+import ExploreScreen from './src/screens/ExploreScreen';
 import SchoolsMapScreen from './src/screens/SchoolsMapScreen';
+
 
 const Tab = createBottomTabNavigator();
 
@@ -76,13 +81,13 @@ const TabNavigator: React.FC = () => {
       />
       <Tab.Screen
         name="Assessment"
-        component={FormScreen}
+        component={AssessmentGate}
         options={{ title: t('nav.form') }}
       />
       <Tab.Screen
-        name="Results"
-        component={ResultsScreen}
-        options={{ title: t('nav.results') }}
+        name="Explore"
+        component={ExploreScreen}
+        options={{ title: 'Explore' }}
       />
       <Tab.Screen
         name="SchoolsMap"
@@ -94,24 +99,23 @@ const TabNavigator: React.FC = () => {
         component={LoginScreen}
         options={{ title: t('nav.login') }}
       />
-      <Tab.Screen
-        name="Account"
-        component={AccountScreen}
-        options={{ title: 'Account' }}
-      />
+      {/* Account tab se oculta; la cuenta se podrá abrir desde un menú o header en el futuro */}
     </Tab.Navigator>
   );
 };
 
 export default function App() {
   return (
-    <AuthProvider>
-      <LanguageProvider>
-        <NavigationContainer>
-          <StatusBar style="auto" />
-          <TabNavigator />
-        </NavigationContainer>
-      </LanguageProvider>
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <OnboardingProvider>
+          <NavigationContainer>
+            <StatusBar style="auto" />
+            <TabNavigator />
+          </NavigationContainer>
+        </OnboardingProvider>
+      </AuthProvider>
+    </LanguageProvider>
+
   );
 }

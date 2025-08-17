@@ -28,6 +28,9 @@ export const violetTheme = {
     success: '#10b981',
     warning: '#f59e0b',
     danger: '#ef4444',
+    // keep aliases for components that expect destructive naming
+    destructive: '#ef4444',
+    destructiveForeground: '#FFFFFF',
     info: '#3b82f6',
     
     // Additional violet shades

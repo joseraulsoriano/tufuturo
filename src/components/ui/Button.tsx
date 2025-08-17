@@ -6,6 +6,7 @@ import {
   ViewStyle,
   TextStyle,
   ActivityIndicator,
+  View,
 } from 'react-native';
 import { violetTheme } from '../../theme/colors';
 
@@ -59,7 +60,11 @@ const Button: React.FC<ButtonProps> = ({
           color={variant === 'default' ? violetTheme.colors.primaryForeground : violetTheme.colors.primary} 
         />
       ) : (
-        <Text style={textStyles}>{children}</Text>
+        typeof children === 'string' ? (
+          <Text style={textStyles}>{children}</Text>
+        ) : (
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>{children}</View>
+        )
       )}
     </TouchableOpacity>
   );

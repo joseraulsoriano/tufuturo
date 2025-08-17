@@ -16,6 +16,7 @@ import { useAuth } from '../context/AuthContext';
 
 const LoginScreen: React.FC = () => {
   const { t } = useLanguage();
+
   const { signInWithGoogle, authEnabled } = useAuth();
   const handleSignIn = async () => {
     try {
@@ -24,6 +25,7 @@ const LoginScreen: React.FC = () => {
       console.log('Sign-in error', e);
     }
   };
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -62,6 +64,7 @@ const LoginScreen: React.FC = () => {
               size="lg"
               style={styles.signInButton}
               onPress={handleSignIn}
+              loading={isLoading}
             >
               <Ionicons name="log-in" size={20} color={violetTheme.colors.primaryForeground} />
               <Text style={styles.signInButtonText}>

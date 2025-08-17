@@ -16,6 +16,9 @@ import { violetTheme } from '../theme/colors';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import { useLanguage } from '../context/LanguageContext';
+import RIASECAssessment, { RiasecScores } from '../components/assessment/RIASECAssessment';
+import GeminiService from '../services/gemini';
+import { useOnboarding } from '../context/OnboardingContext';
 
 const FormScreen: React.FC = () => {
   const { t } = useLanguage();
@@ -27,6 +30,18 @@ const FormScreen: React.FC = () => {
   });
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [showEducationDropdown, setShowEducationDropdown] = useState(false);
+  const [riasec, setRiasec] = useState<RiasecScores | null>(null);
+  const [riasecTop, setRiasecTop] = useState<string[]>([]);
+  const [answeredPayload, setAnsweredPayload] = useState<any>(null);
+  const {
+    setAssessmentCompleted,
+    setVolunteerPlan,
+    setRiasecTop: setRiasecTopGlobal,
+    setLocation,
+    setRiasecScores,
+    setUserStrengths,
+    setUserWeaknesses,
+  } = useOnboarding() as any;
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -119,7 +134,7 @@ const FormScreen: React.FC = () => {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Validate minimum selections
     if (formData.skills.length < 2) {
       Alert.alert('Skills Required', 'Please select at least 2 skills to proceed.');
@@ -129,9 +144,31 @@ const FormScreen: React.FC = () => {
       Alert.alert('Interests Required', 'Please select at least 2 interests to proceed.');
       return;
     }
+    if (!riasec) {
+      Alert.alert('Assessment Required', 'Please complete the interests/skills/values assessment.');
+      return;
+    }
     
-    // Handle form submission here
-    console.log('Form submitted:', formData);
+    try {
+      const plan = await GeminiService.generateVolunteerPlan({
+        riasecScores: riasec,
+        topDimensions: riasecTop,
+        location: formData.location,
+        interests: formData.interests,
+        skills: formData.skills,
+        answeredInterests: (answeredPayload?.interests || []).map((x: any) => ({ text: x.text, score: x.value, label: x.label, dim: x.dim })),
+        answeredSkills: (answeredPayload?.skills || []).map((x: any) => ({ text: x.text, score: x.value, label: x.label, dim: x.dim })),
+        answeredValues: (answeredPayload?.values || []).map((x: any) => ({ text: x.text, score: x.value, label: x.label, dim: x.dim })),
+      });
+      await setVolunteerPlan({ categories: plan.categories, suggestedKeywords: plan.suggestedKeywords, rationale: plan.rationale });
+      await setLocation(formData.location);
+      await setAssessmentCompleted(true);
+      Alert.alert('Sugerencias listas', `Categorías: ${plan.categories.join(', ') || '—'}\nPalabras clave: ${plan.suggestedKeywords.join(', ') || '—'}`);
+      console.log('Gemini plan:', plan);
+    } catch (err: any) {
+      console.error('Gemini error:', err);
+      Alert.alert('No se pudo generar sugerencias', String(err?.message || err));
+    }
   };
 
   const skillsOptions = [
@@ -213,6 +250,7 @@ const FormScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.screenHeader}>
+          <Text style={{ color: violetTheme.colors.muted, fontWeight: '600' }}>Paso 2 de 2</Text>
           <Text style={styles.screenTitle}>Career Assessment</Text>
           <Text style={styles.screenSubtitle}>
             Tell us about yourself to get personalized career recommendations
@@ -245,6 +283,8 @@ const FormScreen: React.FC = () => {
                     </TouchableOpacity>
                   }
                 />
+                {/* Persist location into onboarding state */}
+                {formData.location ? null : null}
                 {isLoadingLocation && (
                   <Text style={styles.locationStatus}>Getting your location...</Text>
                 )}
@@ -288,6 +328,30 @@ const FormScreen: React.FC = () => {
               interestsOptions,
               'interests'
             )}
+
+            {/* RIASEC Assessment */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Ionicons name="podium-outline" size={20} color={violetTheme.colors.primary} />
+                <Text style={styles.sectionTitle}>Perfil vocacional</Text>
+              </View>
+              <Text style={styles.sectionSubtitle}>Responde el test para perfilar recomendaciones</Text>
+              <RIASECAssessment
+                onComplete={(scores, top, answered) => {
+                  setRiasec(scores);
+                  setRiasecTop(top);
+                  setAnsweredPayload(answered);
+                  setRiasecTopGlobal(top);
+                  setRiasecScores?.(scores);
+                  // compute strengths/weaknesses
+                  const dims: Array<keyof RiasecScores> = ['R','I','A','S','E','C'];
+                  const sorted = dims.sort((a,b) => (scores[b] ?? 0) - (scores[a] ?? 0));
+                  setUserStrengths?.(sorted.slice(0,2).map(String));
+                  setUserWeaknesses?.(sorted.slice(-2).map(String));
+                  Alert.alert('Perfil listo', `Dimensiones destacadas: ${top.join(', ')}`);
+                }}
+              />
+            </View>
 
             {/* Submit Button */}
             <View style={styles.submitSection}>
